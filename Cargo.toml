@@ -1,0 +1,17 @@
+[package]
+name = "env_proxy"
+version = "0.1.0"
+authors = ["Ivan Nejgebauer <inejge@gmail.com>"]
+description = "Determination of proxy parameters for a URL from the environment"
+documentation = "https://inejge.github.io/env_proxy"
+homepage = "https://github.com/inejge/env_proxy"
+repository = "https://github.com/inejge/env_proxy"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+keywords = ["proxy", "environment", "http", "url"]
+
+[dependencies]
+url = "1.1"
+
+[dev-dependencies]
+lazy_static = "0.2"
