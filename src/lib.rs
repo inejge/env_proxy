@@ -130,7 +130,7 @@ fn matches_no_proxy(url: &Url) -> bool {
 /// For the __ftp__ protocol scheme, __ftp_proxy__ is checked first; for __https__, __https_proxy__
 /// is checked. Both schemes will fall back to __http_proxy__, then __all_proxy__ if the former is
 /// undefined. For __http__, __http_proxy__ is cheked first, then __all_proxy__. For all other schemes
-/// only __all_proxy__ is checked. In this context, "checked" that the value of a variable is used
+/// only __all_proxy__ is checked. In this context, "checked" means that the value of a variable is used
 /// if present, and the search for further definition stops.
 ///
 /// The return value, if not `None`, is a tuple consisting of the proxy hostname and the port, which
