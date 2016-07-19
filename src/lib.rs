@@ -13,9 +13,9 @@
 //! (or, customarily, the connection library that it uses.)
 //!
 //! This crate aims to replicate the convention of the __curl__ library and offer it
-//! behind a simple API: a single function, `for_url()`, which accepts a target
-//! URL and returns the proxy parameters, if applicable. The method for determining 
-//! the parameters is described in detail in the function's documentation.
+//! behind a simple API: in most cases, a single function, `for_url()`, which accepts
+//! a target URL and returns the proxy parameters, if applicable. The method for determining 
+//! the parameters is described in detail in that function's documentation.
 //!
 //! # Getting Started
 //!
@@ -59,30 +59,34 @@ use std::env::var_os;
 use url::Url;
 
 fn matches_no_proxy(url: &Url) -> bool {
-    let mut maybe_no_proxy = var_os("no_proxy").map(|ref v| v.to_str().unwrap_or("").to_lowercase().to_string());
+    let mut maybe_no_proxy = var_os("no_proxy").map(|ref v| v.to_str().unwrap_or("").to_string());
     if maybe_no_proxy.is_none() {
-	maybe_no_proxy = var_os("NO_PROXY").map(|ref v| v.to_str().unwrap_or("").to_lowercase().to_string());
+	maybe_no_proxy = var_os("NO_PROXY").map(|ref v| v.to_str().unwrap_or("").to_string());
     }
     if let Some(no_proxy) = maybe_no_proxy {
 	if no_proxy == "*" {
 	    return true;
 	}
 	if let Some(host) = url.host_str() {
-	    let host = host.to_lowercase();
 	    'elems: for elem in no_proxy.split(|c| c == ',' || c == ' ') {
 		if elem == "" || elem == "." {
 		    continue;
 		}
 		let ch1 = elem.chars().next().unwrap();
-		let mut eit = elem.chars();
+		let mut elem_iter = elem.chars();
 		if ch1 == '.' {
-		    eit.next();
+		    elem_iter.next();
 		}
-		let mut eit = eit.rev();
-		let mut hit = host.chars().rev();
-		while let Some(ech) = eit.next() {
-		    if let Some(hch) = hit.next() {
-			if ech == hch {
+		let mut elem_iter = elem_iter.rev();
+		let mut host_iter = host.chars().rev();
+		while let Some(elem_ch) = elem_iter.next() {
+		    if let Some(host_ch) = host_iter.next() {
+			let host_ch = host_ch as u32;
+			let elem_ch = match elem_ch as u32 {
+			    uppercase @ 0x41 ... 0x5a => uppercase + 0x20,
+			    anything => anything
+			};
+			if elem_ch == host_ch {
 			    continue;
 			}
 			continue 'elems;
@@ -90,9 +94,9 @@ fn matches_no_proxy(url: &Url) -> bool {
 			continue 'elems;
 		    }
 		}
-		match hit.next() {
+		match host_iter.next() {
 		    None => return true,
-		    Some(hch) if hch == '.' => return true,
+		    Some(host_ch) if host_ch == '.' => return true,
 		    _ => ()
 		}
 	    }
