@@ -59,10 +59,10 @@ use std::env::var_os;
 use url::Url;
 
 fn matches_no_proxy(url: &Url) -> bool {
-    let mut maybe_no_proxy = var_os("no_proxy").map(|ref v| v.to_str().unwrap_or("").to_string());
-    if maybe_no_proxy.is_none() {
-	maybe_no_proxy = var_os("NO_PROXY").map(|ref v| v.to_str().unwrap_or("").to_string());
-    }
+    let maybe_no_proxy = var_os("no_proxy")
+		.or_else(|| var_os("NO_PROXY"))
+		.map(|v| v.to_str().unwrap_or("").to_string());
+
     if let Some(no_proxy) = maybe_no_proxy {
 	if no_proxy == "*" {
 	    return true;
@@ -150,19 +150,17 @@ pub fn for_url(url: &Url) -> Option<(String, u16)> {
 	return None;
     }
 
-    let mut maybe_https_proxy = var_os("https_proxy").map(|ref v| v.to_str().unwrap_or("").to_string());
-    if maybe_https_proxy.is_none() {
-	maybe_https_proxy = var_os("HTTPS_PROXY").map(|ref v| v.to_str().unwrap_or("").to_string());
-    }
-    let mut maybe_ftp_proxy = var_os("ftp_proxy").map(|ref v| v.to_str().unwrap_or("").to_string());
-    if maybe_ftp_proxy.is_none() {
-	maybe_ftp_proxy = var_os("FTP_PROXY").map(|ref v| v.to_str().unwrap_or("").to_string());
-    }
-    let maybe_http_proxy = var_os("http_proxy").map(|ref v| v.to_str().unwrap_or("").to_string());
-    let mut maybe_all_proxy = var_os("all_proxy").map(|ref v| v.to_str().unwrap_or("").to_string());
-    if maybe_all_proxy.is_none() {
-	maybe_all_proxy = var_os("ALL_PROXY").map(|ref v| v.to_str().unwrap_or("").to_string());
-    }
+    let maybe_https_proxy = var_os("https_proxy")
+		.or_else(|| var_os("HTTPS_PROXY"))
+		.map(|v| v.to_str().unwrap_or("").to_string());
+    let maybe_ftp_proxy = var_os("ftp_proxy")
+		.or_else(|| var_os("FTP_PROXY"))
+		.map(|v| v.to_str().unwrap_or("").to_string(),);
+    let maybe_http_proxy = var_os("http_proxy")
+		.map(|v| v.to_str().unwrap_or("").to_string());
+    let maybe_all_proxy = var_os("all_proxy")
+		.or_else(|| var_os("ALL_PROXY"))
+		.map(|v| v.to_str().unwrap_or("").to_string());
     if let Some(url_value) = match url.scheme() {
 				 "https" => maybe_https_proxy.or(maybe_http_proxy.or(maybe_all_proxy)),
 				 "http" => maybe_http_proxy.or(maybe_all_proxy),
