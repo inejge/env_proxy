@@ -11,7 +11,7 @@ See the [documentation](https://inejge.github.io/env_proxy) for API reference.
 Add the following to the `[dependencies]` section of your `Cargo.toml`:
 
 ```toml
-env_proxy = "0.1"
+env_proxy = "0.2"
 ```
 
 Also, import the crate in your crate root:
@@ -26,7 +26,7 @@ extern crate env_proxy;
 use url::Url;
 
 let url = Url::parse("http://www.example.org").unwrap();
-if let Some(proxy) = env_proxy::for_url(&url) {
+if let Some(proxy) = env_proxy::for_url(&url).host_port() {
     println!("Proxy host: {}", proxy.0);
     println!("Proxy port: {}", proxy.1);
 }

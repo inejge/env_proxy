@@ -22,7 +22,7 @@
 //! Add the following to the `[dependencies]` section of your `Cargo.toml`:
 //!
 //! ```toml
-//! env_proxy = "0.1"
+//! env_proxy = "0.2"
 //! ```
 //!
 //! Also, import the crate to your crate root:
@@ -137,8 +137,11 @@ impl ProxyUrl {
     /// the port isn't specified in the URL.
     ///
     /// A `ProxyUrl` instance returned by the library will have the default
-    /// port set to __8080__. To skip the default port substitution, use
-    /// [`with_no_default_port()`](#method.with_no_default_port) on the instance.
+    /// port set to __8080__, which corresponds to __http-alt__ in the IANA port
+    /// registry. This is different from __curl__, which uses port 1080 as the default.
+    ///
+    /// To skip the default port substitution, use [`with_no_default_port()`]
+    /// (#method.with_no_default_port) on the instance.
     pub fn with_default_port(self, port: u16) -> Self {
         ProxyUrl(self.0, Some(port))
     }
@@ -217,7 +220,11 @@ impl ProxyUrl {
 /// '&#8239;__*__&#8239;' (asterisk) which means that proxying is disabled for all hosts. Empty names
 /// are skipped. Names beginning with a dot are not treated specially; matching is always done
 /// by full domain name component. A name consisting of a bare dot is skipped (this is different
-/// from __curl__'s behavior.) The rules are summarized in the following table:
+/// from __curl__'s behavior.)
+///
+/// The rules are summarized in the following table, where the two rightmost columns are headed by two
+/// __no_proxy__ components, the leftmost column contains hostnames, and the symbol inside each cell
+/// represents the result of checking the hostname against the corresponding component:
 ///
 /// |             |example.org|.example.org|
 /// |-------------|:---------:|:----------:|
@@ -230,16 +237,13 @@ impl ProxyUrl {
 /// is checked. Both schemes will fall back to __http_proxy__, then __all_proxy__ if the former is
 /// undefined. For __http__, __http_proxy__ is cheked first, then __all_proxy__. For all other schemes
 /// only __all_proxy__ is checked. In this context, "checked" means that the value of a variable is used
-/// if present, and the search for further definition stops.
+/// if present, and the search for further definitions stops.
 ///
-/// The return value, if not `None`, is a tuple consisting of the proxy hostname and the port, which
-/// are obtained from the chosen environment variable parsed as a URL.
+/// The return value, if not `None`, is an opaque structure wrapping the raw value of the chosen
+/// environment variable.
 ///
 /// If the target URL matches __no_proxy__, or if the hostname cannot be extracted from the URL,
 /// the function returns `None`. If the port is not explicitly defined in the proxy URL, the value 8080
-/// is used, which corresponds to __http-alt__ in the IANA port registry. This is different from __curl__,
-/// which uses port 1080 as the default.
-
 pub fn for_url(url: &Url) -> ProxyUrl {
     if matches_no_proxy(url) {
         return ProxyUrl(None, None);
@@ -259,6 +263,10 @@ pub fn for_url(url: &Url) -> ProxyUrl {
     ProxyUrl(url_value, Some(8080))
 }
 
+/// Determine proxy parameters for a URL given as a string.
+///
+/// Convert the given string to a URL and pass it to [`for_url()`](#method.for_url), returning
+/// its result. If the conversion of the input argument fails, return `None`.
 pub fn for_url_str<S: AsRef<str>>(s: S) -> ProxyUrl {
     let url = match Url::parse(s.as_ref()) {
         Ok(url) => url,
