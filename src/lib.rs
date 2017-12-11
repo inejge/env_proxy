@@ -259,42 +259,15 @@ pub fn for_url(url: &Url) -> ProxyUrl {
     ProxyUrl(url_value, Some(8080))
 }
 
-pub fn for_url_str(s: &str) -> Option<String> {
-    let url = if let Ok(u) = Url::parse(s) {
-        u
-    } else {
-        return None;
+pub fn for_url_str<S: AsRef<str>>(s: S) -> ProxyUrl {
+    let url = match Url::parse(s.as_ref()) {
+        Ok(url) => url,
+	Err(e) => {
+	    warn!("error parsing '{}' as Url: {}", s.as_ref(), e);
+	    return ProxyUrl(None, None);
+	},
     };
-
-    if matches_no_proxy(&url) {
-        return None;
-    }
-
-    let maybe_https_proxy = env_var_pair!("https_proxy", "HTTPS_PROXY");
-    let maybe_ftp_proxy = env_var_pair!("ftp_proxy", "FTP_PROXY");
-    let maybe_http_proxy = env_var_pair!("http_proxy", "");		// ugh, but it works
-    let maybe_all_proxy = env_var_pair!("all_proxy", "ALL_PROXY");
-
-    if let Some(url_value) = match url.scheme() {
-        "https" => maybe_https_proxy.or(maybe_http_proxy.or(maybe_all_proxy)),
-        "http" => maybe_http_proxy.or(maybe_all_proxy),
-        "ftp" => maybe_ftp_proxy.or(maybe_http_proxy.or(maybe_all_proxy)),
-        _ => maybe_all_proxy,
-    }
-    {
-        if let Ok(mut proxy_url) = Url::parse(&url_value) {
-            if proxy_url.host_str().is_some() {
-                if proxy_url.port().is_some() {
-                    return Some(url_value);
-                } else {
-                    if proxy_url.set_port(Some(8080)).is_ok() {
-                        return Some(proxy_url.as_str().to_string());
-                    }
-                }
-            }
-        }
-    }
-    None
+    for_url(&url)
 }
 
 #[cfg(test)]
@@ -385,9 +358,9 @@ mod tests {
 	let u = Url::parse("http://www.example.org").ok().unwrap();
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
 	assert_eq!(
-        for_url_str("http://www.example.org"),
-        Some(("http://proxy.example.com:8080".to_string()))
-    );
+	    for_url_str("http://www.example.org").to_string(),
+	    Some(("http://proxy.example.com:8080/".to_string()))
+	);
     }
 
     #[test]
@@ -398,15 +371,15 @@ mod tests {
 	let u = Url::parse("http://www.example.org").ok().unwrap();
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
 	assert_eq!(
-        for_url_str("http://www.example.org"),
-        Some(("http://proxy.example.com:8080".to_string()))
-    );
+	    for_url_str("http://www.example.org").to_string(),
+	    Some(("http://proxy.example.com:8080/".to_string()))
+	);
 	set_var("all_proxy", "http://proxy.example.org:8081");
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
 	assert_eq!(
-        for_url_str("http://www.example.org"),
-        Some(("http://proxy.example.org:8081".to_string()))
-    );
+	    for_url_str("http://www.example.org").to_string(),
+	    Some(("http://proxy.example.org:8081/".to_string()))
+	);
     }
 
     #[test]
@@ -419,15 +392,15 @@ mod tests {
 	let u = Url::parse("https://www.example.org").ok().unwrap();
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
 	assert_eq!(
-		for_url_str("https://www.example.org"),
-		Some(("http://proxy.example.com:8080".to_string()))
+	    for_url_str("https://www.example.org").to_string(),
+	    Some(("http://proxy.example.com:8080/".to_string()))
 	);
 	set_var("https_proxy", "http://proxy.example.com:8081");
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8081)));
 	assert_eq!(
-        for_url_str("https://www.example.org"),
-        Some(("http://proxy.example.com:8081".to_string()))
-    );
+	    for_url_str("https://www.example.org").to_string(),
+	    Some(("http://proxy.example.com:8081/".to_string()))
+	);
     }
 
     #[test]
@@ -439,21 +412,21 @@ mod tests {
 	let u = Url::parse("https://www.example.org").ok().unwrap();
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
 	assert_eq!(
-        for_url_str("https://www.example.org"),
-        Some(("http://proxy.example.com:8080".to_string()))
-    );
+	    for_url_str("https://www.example.org").to_string(),
+	    Some(("http://proxy.example.com:8080/".to_string()))
+	);
 	remove_var("http_proxy");
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
 	assert_eq!(
-        for_url_str("https://www.example.org"),
-        Some(("http://proxy.example.org:8081".to_string()))
-    );
+	    for_url_str("https://www.example.org").to_string(),
+	    Some(("http://proxy.example.org:8081/".to_string()))
+	);
 	set_var("all_proxy", "http://proxy.example.org:8082");
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8082)));
 	assert_eq!(
-        for_url_str("https://www.example.org"),
-        Some(("http://proxy.example.org:8082".to_string()))
-    );
+	    for_url_str("https://www.example.org").to_string(),
+	    Some(("http://proxy.example.org:8082/".to_string()))
+	);
     }
 
     #[test]
@@ -466,14 +439,14 @@ mod tests {
 	let u = Url::parse("ftp://www.example.org").ok().unwrap();
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
 	assert_eq!(
-        for_url_str("ftp://www.example.org"),
-        Some(("http://proxy.example.com:8080".to_string()))
-    );
+	    for_url_str("ftp://www.example.org").to_string(),
+	    Some(("http://proxy.example.com:8080/".to_string()))
+	);
 	set_var("ftp_proxy", "http://proxy.example.com:8081");
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8081)));
 	assert_eq!(
-		for_url_str("ftp://www.example.org"),
-		Some(("http://proxy.example.com:8081".to_string()))
+	    for_url_str("ftp://www.example.org").to_string(),
+	    Some(("http://proxy.example.com:8081/".to_string()))
 	);
     }
 
@@ -486,20 +459,20 @@ mod tests {
 	let u = Url::parse("ftp://www.example.org").ok().unwrap();
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
 	assert_eq!(
-        for_url_str("ftp://www.example.org"),
-        Some(("http://proxy.example.com:8080".to_string()))
-    );
+	    for_url_str("ftp://www.example.org").to_string(),
+	    Some(("http://proxy.example.com:8080/".to_string()))
+	);
 	remove_var("http_proxy");
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
 	assert_eq!(
-		for_url_str("ftp://www.example.org"),
-		Some(("http://proxy.example.org:8081".to_string()))
+	    for_url_str("ftp://www.example.org").to_string(),
+	    Some(("http://proxy.example.org:8081/".to_string()))
 	);
 	set_var("all_proxy", "http://proxy.example.org:8082");
 	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8082)));
 	assert_eq!(
-        for_url_str("ftp://www.example.org"),
-        Some(("http://proxy.example.org:8082".to_string()))
-    );
+	    for_url_str("ftp://www.example.org").to_string(),
+	    Some(("http://proxy.example.org:8082/".to_string()))
+	);
     }
 }
