@@ -53,17 +53,27 @@
 
 #[cfg(test)]
 #[macro_use] extern crate lazy_static;
+#[macro_use] extern crate log;
 extern crate url;
 
 use std::env::var_os;
 use url::Url;
 
-fn matches_no_proxy(url: &Url) -> bool {
-    let maybe_no_proxy = var_os("no_proxy")
-		.or_else(|| var_os("NO_PROXY"))
-		.map(|v| v.to_str().unwrap_or("").to_string());
+macro_rules! env_var_pair {
+    ($lc_var:expr, $uc_var:expr) => {
+        var_os($lc_var).or_else(|| var_os($uc_var))
+            .map(|v| v.to_str()
+                .map(str::to_string)
+                .or_else(|| {
+                    warn!("non UTF-8 content in {}/{}", $lc_var, $uc_var);
+                    None
+                }))
+            .unwrap_or_else(|| None)
+    };
+}
 
-    if let Some(no_proxy) = maybe_no_proxy {
+fn matches_no_proxy(url: &Url) -> bool {
+    if let Some(no_proxy) = env_var_pair!("no_proxy", "NO_PROXY") {
 	if no_proxy == "*" {
 	    return true;
 	}
