@@ -74,43 +74,43 @@ macro_rules! env_var_pair {
 
 fn matches_no_proxy(url: &Url) -> bool {
     if let Some(no_proxy) = env_var_pair!("no_proxy", "NO_PROXY") {
-	if no_proxy == "*" {
-	    return true;
-	}
-	if let Some(host) = url.host_str() {
-	    'elems: for elem in no_proxy.split(|c| c == ',' || c == ' ') {
-		if elem == "" || elem == "." {
-		    continue;
-		}
-		let ch1 = elem.chars().next().unwrap();
-		let mut elem_iter = elem.chars();
-		if ch1 == '.' {
-		    elem_iter.next();
-		}
-		let mut elem_iter = elem_iter.rev();
-		let mut host_iter = host.chars().rev();
-		while let Some(elem_ch) = elem_iter.next() {
-		    if let Some(host_ch) = host_iter.next() {
-			let host_ch = host_ch as u32;
-			let elem_ch = match elem_ch as u32 {
-			    uppercase @ 0x41 ... 0x5a => uppercase + 0x20,
-			    anything => anything
-			};
-			if elem_ch == host_ch {
-			    continue;
-			}
-			continue 'elems;
-		    } else {
-			continue 'elems;
-		    }
-		}
-		match host_iter.next() {
-		    None => return true,
-		    Some(host_ch) if host_ch == '.' => return true,
-		    _ => ()
-		}
-	    }
-	}
+        if no_proxy == "*" {
+            return true;
+        }
+        if let Some(host) = url.host_str() {
+            'elems: for elem in no_proxy.split(|c| c == ',' || c == ' ') {
+                if elem == "" || elem == "." {
+                    continue;
+                }
+                let ch1 = elem.chars().next().unwrap();
+                let mut elem_iter = elem.chars();
+                if ch1 == '.' {
+                    elem_iter.next();
+                }
+                let mut elem_iter = elem_iter.rev();
+                let mut host_iter = host.chars().rev();
+                while let Some(elem_ch) = elem_iter.next() {
+                    if let Some(host_ch) = host_iter.next() {
+                        let host_ch = host_ch as u32;
+                        let elem_ch = match elem_ch as u32 {
+                            uppercase @ 0x41 ... 0x5a => uppercase + 0x20,
+                            anything => anything
+                        };
+                        if elem_ch == host_ch {
+                            continue;
+                        }
+                        continue 'elems;
+                    } else {
+                        continue 'elems;
+                    }
+                }
+                match host_iter.next() {
+                    None => return true,
+                    Some(host_ch) if host_ch == '.' => return true,
+                    _ => ()
+                }
+            }
+        }
     }
     false
 }
@@ -125,12 +125,12 @@ pub struct ProxyUrl(Option<String>, Option<u16>);
 impl ProxyUrl {
     /// Return the raw value of the proxy URL.
     pub fn raw_value(self) -> Option<String> {
-	self.0
+        self.0
     }
 
     /// Return `true` if the `None` value is wrapped.
     pub fn is_none(self) -> bool {
-	self.0.is_none()
+        self.0.is_none()
     }
 
     /// Set the default port to use when transforming the raw URL value if
@@ -140,12 +140,12 @@ impl ProxyUrl {
     /// port set to __8080__. To skip the default port substitution, use
     /// [`with_no_default_port()`](#method.with_no_default_port) on the instance.
     pub fn with_default_port(self, port: u16) -> Self {
-	ProxyUrl(self.0, Some(port))
+        ProxyUrl(self.0, Some(port))
     }
 
     /// Don't use the default port value when transforming the raw URL.
     pub fn with_no_default_port(self) -> Self {
-	ProxyUrl(self.0, None)
+        ProxyUrl(self.0, None)
     }
 
     /// Transform the raw proxy URL into a `Url`.
@@ -160,26 +160,26 @@ impl ProxyUrl {
     ///
     /// If any of the steps fail, `None` will be returned.
     pub fn to_url(self) -> Option<Url> {
-	if let Some(Ok(mut url)) = self.0.map(|s| Url::parse(&s).map_err(|e| {
-	    warn!("url parse error: {}", e);
-	    e
-	})) {
-	    if url.host_str().is_none() {
-		warn!("host part of the URL is empty");
-		return None;
-	    }
-	    if url.port().is_some() {
-		return Some(url);
-	    } else if self.1.is_none() {
-		warn!("the port of the URL is unknown");
-		return None;
-	    }
-	    match url.set_port(self.1) {
-		Ok(_) => return Some(url),
-		Err(_) => warn!("could not set URL port"),
-	    }
-	}
-	None
+        if let Some(Ok(mut url)) = self.0.map(|s| Url::parse(&s).map_err(|e| {
+            warn!("url parse error: {}", e);
+            e
+        })) {
+            if url.host_str().is_none() {
+                warn!("host part of the URL is empty");
+                return None;
+            }
+            if url.port().is_some() {
+                return Some(url);
+            } else if self.1.is_none() {
+                warn!("the port of the URL is unknown");
+                return None;
+            }
+            match url.set_port(self.1) {
+                Ok(_) => return Some(url),
+                Err(_) => warn!("could not set URL port"),
+            }
+        }
+        None
     }
 
     /// Return the __(host, port)__ tuple of the proxy.
@@ -187,7 +187,7 @@ impl ProxyUrl {
     /// The raw URL will first be transformed into a `Url`, with any errors in the conversion
     /// producing a `None` (see [`to_url()`](#method.to_url)).
     pub fn host_port(self) -> Option<(String, u16)> {
-	self.to_url().map(|u| (u.host_str().expect("host_str").to_string(), u.port().expect("port")))
+        self.to_url().map(|u| (u.host_str().expect("host_str").to_string(), u.port().expect("port")))
     }
 
 
@@ -196,7 +196,7 @@ impl ProxyUrl {
     /// The raw URL will first be transformed into a `Url`, with any errors in the conversion
     /// producing a `None` (see [`to_url()`](#method.to_url)).
     pub fn to_string(self) -> Option<String> {
-	self.to_url().map(Url::into_string)
+        self.to_url().map(Url::into_string)
     }
 }
 
@@ -242,19 +242,19 @@ impl ProxyUrl {
 
 pub fn for_url(url: &Url) -> ProxyUrl {
     if matches_no_proxy(url) {
-	return ProxyUrl(None, None);
+        return ProxyUrl(None, None);
     }
 
     let maybe_https_proxy = env_var_pair!("https_proxy", "HTTPS_PROXY");
     let maybe_ftp_proxy = env_var_pair!("ftp_proxy", "FTP_PROXY");
-    let maybe_http_proxy = env_var_pair!("http_proxy", "");		// ugh, but it works
+    let maybe_http_proxy = env_var_pair!("http_proxy", "");             // ugh, but it works
     let maybe_all_proxy = env_var_pair!("all_proxy", "ALL_PROXY");
 
     let url_value = match url.scheme() {
-	"https" => maybe_https_proxy.or(maybe_http_proxy.or(maybe_all_proxy)),
-	"http" => maybe_http_proxy.or(maybe_all_proxy),
-	"ftp" => maybe_ftp_proxy.or(maybe_http_proxy.or(maybe_all_proxy)),
-	_ => maybe_all_proxy,
+        "https" => maybe_https_proxy.or(maybe_http_proxy.or(maybe_all_proxy)),
+        "http" => maybe_http_proxy.or(maybe_all_proxy),
+        "ftp" => maybe_ftp_proxy.or(maybe_http_proxy.or(maybe_all_proxy)),
+        _ => maybe_all_proxy,
     };
     ProxyUrl(url_value, Some(8080))
 }
@@ -262,10 +262,10 @@ pub fn for_url(url: &Url) -> ProxyUrl {
 pub fn for_url_str<S: AsRef<str>>(s: S) -> ProxyUrl {
     let url = match Url::parse(s.as_ref()) {
         Ok(url) => url,
-	Err(e) => {
-	    warn!("error parsing '{}' as Url: {}", s.as_ref(), e);
-	    return ProxyUrl(None, None);
-	},
+        Err(e) => {
+            warn!("error parsing '{}' as Url: {}", s.as_ref(), e);
+            return ProxyUrl(None, None);
+        },
     };
     for_url(&url)
 }
@@ -280,199 +280,199 @@ mod tests {
     // environment is per-process, and we need it stable per-thread,
     // hence locking
     lazy_static! {
-	static ref LOCK: Mutex<()> = Mutex::new(());
+        static ref LOCK: Mutex<()> = Mutex::new(());
     }
 
     fn scrub_env() {
-	remove_var("http_proxy");
-	remove_var("https_proxy");
-	remove_var("HTTPS_PROXY");
-	remove_var("ftp_proxy");
-	remove_var("FTP_PROXY");
-	remove_var("all_proxy");
-	remove_var("ALL_PROXY");
-	remove_var("no_proxy");
-	remove_var("NO_PROXY");
+        remove_var("http_proxy");
+        remove_var("https_proxy");
+        remove_var("HTTPS_PROXY");
+        remove_var("ftp_proxy");
+        remove_var("FTP_PROXY");
+        remove_var("all_proxy");
+        remove_var("ALL_PROXY");
+        remove_var("no_proxy");
+        remove_var("NO_PROXY");
     }
 
     #[test]
     fn no_proxy_simple_name() {
-	let _l = LOCK.lock();
-	scrub_env();
-	set_var("no_proxy", "example.org");
-	set_var("http_proxy", "http://proxy.example.com:8080");
-	let u = Url::parse("http://example.org").ok().unwrap();
-	assert!(for_url(&u).is_none());
-	assert!(for_url_str("http://example.org").is_none());
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("no_proxy", "example.org");
+        set_var("http_proxy", "http://proxy.example.com:8080");
+        let u = Url::parse("http://example.org").ok().unwrap();
+        assert!(for_url(&u).is_none());
+        assert!(for_url_str("http://example.org").is_none());
     }
 
     #[test]
     fn no_proxy_global() {
-	let _l = LOCK.lock();
-	scrub_env();
-	set_var("no_proxy", "*");
-	set_var("http_proxy", "http://proxy.example.com:8080");
-	let u = Url::parse("http://example.org").ok().unwrap();
-	assert!(for_url(&u).is_none());
-	assert!(for_url_str("http://example.org").is_none());
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("no_proxy", "*");
+        set_var("http_proxy", "http://proxy.example.com:8080");
+        let u = Url::parse("http://example.org").ok().unwrap();
+        assert!(for_url(&u).is_none());
+        assert!(for_url_str("http://example.org").is_none());
     }
 
     #[test]
     fn no_proxy_subdomain() {
-	let _l = LOCK.lock();
-	scrub_env();
-	set_var("no_proxy", "example.org");
-	set_var("http_proxy", "http://proxy.example.com:8080");
-	let u = Url::parse("http://www.example.org").ok().unwrap();
-	assert!(for_url(&u).is_none());
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("no_proxy", "example.org");
+        set_var("http_proxy", "http://proxy.example.com:8080");
+        let u = Url::parse("http://www.example.org").ok().unwrap();
+        assert!(for_url(&u).is_none());
     }
 
     #[test]
     fn no_proxy_subdomain_dot() {
-	let _l = LOCK.lock();
-	scrub_env();
-	set_var("no_proxy", ".example.org");
-	set_var("http_proxy", "http://proxy.example.com:8080");
-	let u = Url::parse("http://www.example.org").ok().unwrap();
-	assert!(for_url(&u).is_none());
-	assert!(for_url_str("http://www.example.org").is_none());
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("no_proxy", ".example.org");
+        set_var("http_proxy", "http://proxy.example.com:8080");
+        let u = Url::parse("http://www.example.org").ok().unwrap();
+        assert!(for_url(&u).is_none());
+        assert!(for_url_str("http://www.example.org").is_none());
     }
 
     #[test]
     fn no_proxy_multiple_list() {
-	let _l = LOCK.lock();
-	scrub_env();
-	set_var("no_proxy", "com, .example.org, net");
-	set_var("http_proxy", "http://proxy.example.com:8080");
-	let u = Url::parse("http://www.example.org").ok().unwrap();
-	assert!(for_url(&u).is_none());
-	assert!(for_url_str("http://www.example.org").is_none());
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("no_proxy", "com, .example.org, net");
+        set_var("http_proxy", "http://proxy.example.com:8080");
+        let u = Url::parse("http://www.example.org").ok().unwrap();
+        assert!(for_url(&u).is_none());
+        assert!(for_url_str("http://www.example.org").is_none());
     }
 
     #[test]
     fn http_proxy_specific() {
-	let _l = LOCK.lock();
-	scrub_env();
-	set_var("http_proxy", "http://proxy.example.com:8080");
-	set_var("all_proxy", "http://proxy.example.org:8081");
-	let u = Url::parse("http://www.example.org").ok().unwrap();
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
-	assert_eq!(
-	    for_url_str("http://www.example.org").to_string(),
-	    Some(("http://proxy.example.com:8080/".to_string()))
-	);
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("http_proxy", "http://proxy.example.com:8080");
+        set_var("all_proxy", "http://proxy.example.org:8081");
+        let u = Url::parse("http://www.example.org").ok().unwrap();
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
+        assert_eq!(
+            for_url_str("http://www.example.org").to_string(),
+            Some(("http://proxy.example.com:8080/".to_string()))
+        );
     }
 
     #[test]
     fn http_proxy_fallback() {
-	let _l = LOCK.lock();
-	scrub_env();
-	set_var("ALL_PROXY", "http://proxy.example.com:8080");
-	let u = Url::parse("http://www.example.org").ok().unwrap();
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
-	assert_eq!(
-	    for_url_str("http://www.example.org").to_string(),
-	    Some(("http://proxy.example.com:8080/".to_string()))
-	);
-	set_var("all_proxy", "http://proxy.example.org:8081");
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
-	assert_eq!(
-	    for_url_str("http://www.example.org").to_string(),
-	    Some(("http://proxy.example.org:8081/".to_string()))
-	);
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("ALL_PROXY", "http://proxy.example.com:8080");
+        let u = Url::parse("http://www.example.org").ok().unwrap();
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
+        assert_eq!(
+            for_url_str("http://www.example.org").to_string(),
+            Some(("http://proxy.example.com:8080/".to_string()))
+        );
+        set_var("all_proxy", "http://proxy.example.org:8081");
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
+        assert_eq!(
+            for_url_str("http://www.example.org").to_string(),
+            Some(("http://proxy.example.org:8081/".to_string()))
+        );
     }
 
     #[test]
     fn https_proxy_specific() {
-	let _l = LOCK.lock();
-	scrub_env();
-	set_var("HTTPS_PROXY", "http://proxy.example.com:8080");
-	set_var("http_proxy", "http://proxy.example.org:8081");
-	set_var("all_proxy", "http://proxy.example.org:8081");
-	let u = Url::parse("https://www.example.org").ok().unwrap();
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
-	assert_eq!(
-	    for_url_str("https://www.example.org").to_string(),
-	    Some(("http://proxy.example.com:8080/".to_string()))
-	);
-	set_var("https_proxy", "http://proxy.example.com:8081");
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8081)));
-	assert_eq!(
-	    for_url_str("https://www.example.org").to_string(),
-	    Some(("http://proxy.example.com:8081/".to_string()))
-	);
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("HTTPS_PROXY", "http://proxy.example.com:8080");
+        set_var("http_proxy", "http://proxy.example.org:8081");
+        set_var("all_proxy", "http://proxy.example.org:8081");
+        let u = Url::parse("https://www.example.org").ok().unwrap();
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
+        assert_eq!(
+            for_url_str("https://www.example.org").to_string(),
+            Some(("http://proxy.example.com:8080/".to_string()))
+        );
+        set_var("https_proxy", "http://proxy.example.com:8081");
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8081)));
+        assert_eq!(
+            for_url_str("https://www.example.org").to_string(),
+            Some(("http://proxy.example.com:8081/".to_string()))
+        );
     }
 
     #[test]
     fn https_proxy_fallback() {
-	let _l = LOCK.lock();
-	scrub_env();
-	set_var("http_proxy", "http://proxy.example.com:8080");
-	set_var("ALL_PROXY", "http://proxy.example.org:8081");
-	let u = Url::parse("https://www.example.org").ok().unwrap();
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
-	assert_eq!(
-	    for_url_str("https://www.example.org").to_string(),
-	    Some(("http://proxy.example.com:8080/".to_string()))
-	);
-	remove_var("http_proxy");
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
-	assert_eq!(
-	    for_url_str("https://www.example.org").to_string(),
-	    Some(("http://proxy.example.org:8081/".to_string()))
-	);
-	set_var("all_proxy", "http://proxy.example.org:8082");
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8082)));
-	assert_eq!(
-	    for_url_str("https://www.example.org").to_string(),
-	    Some(("http://proxy.example.org:8082/".to_string()))
-	);
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("http_proxy", "http://proxy.example.com:8080");
+        set_var("ALL_PROXY", "http://proxy.example.org:8081");
+        let u = Url::parse("https://www.example.org").ok().unwrap();
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
+        assert_eq!(
+            for_url_str("https://www.example.org").to_string(),
+            Some(("http://proxy.example.com:8080/".to_string()))
+        );
+        remove_var("http_proxy");
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
+        assert_eq!(
+            for_url_str("https://www.example.org").to_string(),
+            Some(("http://proxy.example.org:8081/".to_string()))
+        );
+        set_var("all_proxy", "http://proxy.example.org:8082");
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8082)));
+        assert_eq!(
+            for_url_str("https://www.example.org").to_string(),
+            Some(("http://proxy.example.org:8082/".to_string()))
+        );
     }
 
     #[test]
     fn ftp_proxy_specific() {
-	let _l = LOCK.lock();
-	scrub_env();
-	set_var("FTP_PROXY", "http://proxy.example.com:8080");
-	set_var("http_proxy", "http://proxy.example.org:8081");
-	set_var("all_proxy", "http://proxy.example.org:8081");
-	let u = Url::parse("ftp://www.example.org").ok().unwrap();
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
-	assert_eq!(
-	    for_url_str("ftp://www.example.org").to_string(),
-	    Some(("http://proxy.example.com:8080/".to_string()))
-	);
-	set_var("ftp_proxy", "http://proxy.example.com:8081");
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8081)));
-	assert_eq!(
-	    for_url_str("ftp://www.example.org").to_string(),
-	    Some(("http://proxy.example.com:8081/".to_string()))
-	);
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("FTP_PROXY", "http://proxy.example.com:8080");
+        set_var("http_proxy", "http://proxy.example.org:8081");
+        set_var("all_proxy", "http://proxy.example.org:8081");
+        let u = Url::parse("ftp://www.example.org").ok().unwrap();
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
+        assert_eq!(
+            for_url_str("ftp://www.example.org").to_string(),
+            Some(("http://proxy.example.com:8080/".to_string()))
+        );
+        set_var("ftp_proxy", "http://proxy.example.com:8081");
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8081)));
+        assert_eq!(
+            for_url_str("ftp://www.example.org").to_string(),
+            Some(("http://proxy.example.com:8081/".to_string()))
+        );
     }
 
     #[test]
     fn ftp_proxy_fallback() {
-	let _l = LOCK.lock();
-	scrub_env();
-	set_var("http_proxy", "http://proxy.example.com:8080");
-	set_var("ALL_PROXY", "http://proxy.example.org:8081");
-	let u = Url::parse("ftp://www.example.org").ok().unwrap();
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
-	assert_eq!(
-	    for_url_str("ftp://www.example.org").to_string(),
-	    Some(("http://proxy.example.com:8080/".to_string()))
-	);
-	remove_var("http_proxy");
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
-	assert_eq!(
-	    for_url_str("ftp://www.example.org").to_string(),
-	    Some(("http://proxy.example.org:8081/".to_string()))
-	);
-	set_var("all_proxy", "http://proxy.example.org:8082");
-	assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8082)));
-	assert_eq!(
-	    for_url_str("ftp://www.example.org").to_string(),
-	    Some(("http://proxy.example.org:8082/".to_string()))
-	);
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("http_proxy", "http://proxy.example.com:8080");
+        set_var("ALL_PROXY", "http://proxy.example.org:8081");
+        let u = Url::parse("ftp://www.example.org").ok().unwrap();
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
+        assert_eq!(
+            for_url_str("ftp://www.example.org").to_string(),
+            Some(("http://proxy.example.com:8080/".to_string()))
+        );
+        remove_var("http_proxy");
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
+        assert_eq!(
+            for_url_str("ftp://www.example.org").to_string(),
+            Some(("http://proxy.example.org:8081/".to_string()))
+        );
+        set_var("all_proxy", "http://proxy.example.org:8082");
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8082)));
+        assert_eq!(
+            for_url_str("ftp://www.example.org").to_string(),
+            Some(("http://proxy.example.org:8082/".to_string()))
+        );
     }
 }
