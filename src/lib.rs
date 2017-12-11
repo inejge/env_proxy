@@ -115,6 +115,91 @@ fn matches_no_proxy(url: &Url) -> bool {
     false
 }
 
+/// A wrapper for the proxy URL retrieved from the environment.
+///
+/// This struct will wrap the raw value of the URL, which is only guaranteed to be valid UTF-8
+/// when returned. Various methods exist to extract the value as-is, translate it into other forms,
+/// and provide elements of interest.
+pub struct ProxyUrl(Option<String>, Option<u16>);
+
+impl ProxyUrl {
+    /// Return the raw value of the proxy URL.
+    pub fn raw_value(self) -> Option<String> {
+	self.0
+    }
+
+    /// Return `true` if the `None` value is wrapped.
+    pub fn is_none(self) -> bool {
+	self.0.is_none()
+    }
+
+    /// Set the default port to use when transforming the raw URL value if
+    /// the port isn't specified in the URL.
+    ///
+    /// A `ProxyUrl` instance returned by the library will have the default
+    /// port set to __8080__. To skip the default port substitution, use
+    /// [`with_no_default_port()`](#method.with_no_default_port) on the instance.
+    pub fn with_default_port(self, port: u16) -> Self {
+	ProxyUrl(self.0, Some(port))
+    }
+
+    /// Don't use the default port value when transforming the raw URL.
+    pub fn with_no_default_port(self) -> Self {
+	ProxyUrl(self.0, None)
+    }
+
+    /// Transform the raw proxy URL into a `Url`.
+    ///
+    /// The transformation will:
+    ///
+    /// * Parse the raw URL as a `Url`;
+    /// * Ensure that the host part is not empty;
+    /// * Use the default value for the port (or not, see [`with_default_port()`](#method.with_default_port))
+    ///   if one is not specified in the raw URL.
+    /// * Ensure that the port is not empty.
+    ///
+    /// If any of the steps fail, `None` will be returned.
+    pub fn to_url(self) -> Option<Url> {
+	if let Some(Ok(mut url)) = self.0.map(|s| Url::parse(&s).map_err(|e| {
+	    warn!("url parse error: {}", e);
+	    e
+	})) {
+	    if url.host_str().is_none() {
+		warn!("host part of the URL is empty");
+		return None;
+	    }
+	    if url.port().is_some() {
+		return Some(url);
+	    } else if self.1.is_none() {
+		warn!("the port of the URL is unknown");
+		return None;
+	    }
+	    match url.set_port(self.1) {
+		Ok(_) => return Some(url),
+		Err(_) => warn!("could not set URL port"),
+	    }
+	}
+	None
+    }
+
+    /// Return the __(host, port)__ tuple of the proxy.
+    ///
+    /// The raw URL will first be transformed into a `Url`, with any errors in the conversion
+    /// producing a `None` (see [`to_url()`](#method.to_url)).
+    pub fn host_port(self) -> Option<(String, u16)> {
+	self.to_url().map(|u| (u.host_str().expect("host_str").to_string(), u.port().expect("port")))
+    }
+
+
+    /// Return the string representation of the proxy URL.
+    ///
+    /// The raw URL will first be transformed into a `Url`, with any errors in the conversion
+    /// producing a `None` (see [`to_url()`](#method.to_url)).
+    pub fn to_string(self) -> Option<String> {
+	self.to_url().map(Url::into_string)
+    }
+}
+
 /// Determine proxy parameters for a URL by examining the environment variables.
 ///
 /// __Attention__: in a multithreaded program, care should be taken not to change the environment
