@@ -1,6 +1,6 @@
 [package]
 name = "env_proxy"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Ivan Nejgebauer <inejge@gmail.com>"]
 description = "Determination of proxy parameters for a URL from the environment"
 documentation = "https://inejge.github.io/env_proxy"
@@ -12,7 +12,7 @@ keywords = ["proxy", "environment", "http", "url"]
 
 [dependencies]
 url = "1"
-log = "0.3"
+log = "0.4"
 
 [dev-dependencies]
-lazy_static = "0.2"
+lazy_static = "1"
