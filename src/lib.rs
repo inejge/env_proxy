@@ -373,7 +373,7 @@ mod tests {
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
         assert_eq!(
             for_url_str("http://www.example.org").to_string(),
-            Some(("http://proxy.example.com:8080/".to_string()))
+            Some("http://proxy.example.com:8080/".to_string())
         );
     }
 
@@ -386,7 +386,7 @@ mod tests {
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
         assert_eq!(
             for_url_str("http://www.example.org").to_string(),
-            Some(("http://proxy.example.com:8080/".to_string()))
+            Some("http://proxy.example.com:8080/".to_string())
         );
     }
 
@@ -399,13 +399,13 @@ mod tests {
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
         assert_eq!(
             for_url_str("http://www.example.org").to_string(),
-            Some(("http://proxy.example.com:8080/".to_string()))
+            Some("http://proxy.example.com:8080/".to_string())
         );
         set_var("all_proxy", "http://proxy.example.org:8081");
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
         assert_eq!(
             for_url_str("http://www.example.org").to_string(),
-            Some(("http://proxy.example.org:8081/".to_string()))
+            Some("http://proxy.example.org:8081/".to_string())
         );
     }
 
@@ -419,13 +419,13 @@ mod tests {
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
         assert_eq!(
             for_url_str("https://www.example.org").to_string(),
-            Some(("http://proxy.example.com:8080/".to_string()))
+            Some("http://proxy.example.com:8080/".to_string())
         );
         set_var("https_proxy", "http://proxy.example.com:8082");
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8082)));
         assert_eq!(
             for_url_str("https://www.example.org").to_string(),
-            Some(("http://proxy.example.com:8082/".to_string()))
+            Some("http://proxy.example.com:8082/".to_string())
         );
     }
 
@@ -438,13 +438,13 @@ mod tests {
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
         assert_eq!(
             for_url_str("https://www.example.org").to_string(),
-            Some(("http://proxy.example.org:8081/".to_string()))
+            Some("http://proxy.example.org:8081/".to_string())
         );
         set_var("all_proxy", "http://proxy.example.org:8082");
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8082)));
         assert_eq!(
             for_url_str("https://www.example.org").to_string(),
-            Some(("http://proxy.example.org:8082/".to_string()))
+            Some("http://proxy.example.org:8082/".to_string())
         );
     }
 
@@ -458,13 +458,13 @@ mod tests {
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
         assert_eq!(
             for_url_str("ftp://www.example.org").to_string(),
-            Some(("http://proxy.example.com:8080/".to_string()))
+            Some("http://proxy.example.com:8080/".to_string())
         );
         set_var("ftp_proxy", "http://proxy.example.com:8082");
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8082)));
         assert_eq!(
             for_url_str("ftp://www.example.org").to_string(),
-            Some(("http://proxy.example.com:8082/".to_string()))
+            Some("http://proxy.example.com:8082/".to_string())
         );
     }
 
@@ -477,13 +477,13 @@ mod tests {
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
         assert_eq!(
             for_url_str("ftp://www.example.org").to_string(),
-            Some(("http://proxy.example.org:8081/".to_string()))
+            Some("http://proxy.example.org:8081/".to_string())
         );
         set_var("all_proxy", "http://proxy.example.org:8082");
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8082)));
         assert_eq!(
             for_url_str("ftp://www.example.org").to_string(),
-            Some(("http://proxy.example.org:8082/".to_string()))
+            Some("http://proxy.example.org:8082/".to_string())
         );
     }
 }
