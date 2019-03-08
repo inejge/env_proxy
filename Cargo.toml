@@ -1,6 +1,6 @@
 [package]
 name = "env_proxy"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Ivan Nejgebauer <inejge@gmail.com>"]
 description = "Determination of proxy parameters for a URL from the environment"
 documentation = "https://inejge.github.io/env_proxy"

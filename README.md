@@ -11,7 +11,7 @@ See the [documentation](https://inejge.github.io/env_proxy) for API reference.
 Add the following to the `[dependencies]` section of your `Cargo.toml`:
 
 ```toml
-env_proxy = "0.2"
+env_proxy = "0.3"
 ```
 
 Also, import the crate in your crate root:
