@@ -239,11 +239,11 @@ impl ProxyUrl {
 /// |xample.org   |  &#x2718; |  &#x2718;  |
 /// |org          |  &#x2718; |  &#x2718;  |
 ///
-/// For the __ftp__ protocol scheme, __ftp_proxy__ is checked first; for __https__, __https_proxy__
-/// is checked. Both schemes will fall back to __http_proxy__, then __all_proxy__ if the former is
-/// undefined. For __http__, __http_proxy__ is cheked first, then __all_proxy__. For all other schemes
-/// only __all_proxy__ is checked. In this context, "checked" means that the value of a variable is used
-/// if present, and the search for further definitions stops.
+/// For the __ftp__ protocol scheme, __ftp_proxy__ is checked first; for __http__, __http_proxy__
+/// is checked, and for __https__, it's __https_proxy__. These three schemes will fall back to __all_proxy__
+/// if the original variable is undefined. For all other schemes only __all_proxy__ is checked. In this
+/// context, "checked" means that the value of a variable is used if present, and the search for further
+/// definitions stops.
 ///
 /// The return value, if not `None`, is an opaque structure wrapping the value (possibly canonicalized,
 /// see [`ProxyUrl::to_url()`](struct.ProxyUrl.html#method.to_url)) of the chosen environment variable.
@@ -261,9 +261,9 @@ pub fn for_url(url: &Url) -> ProxyUrl {
     let maybe_all_proxy = env_var_pair!("all_proxy", "ALL_PROXY");
 
     let url_value = match url.scheme() {
-        "https" => maybe_https_proxy.or(maybe_http_proxy.or(maybe_all_proxy)),
+        "https" => maybe_https_proxy.or(maybe_all_proxy),
         "http" => maybe_http_proxy.or(maybe_all_proxy),
-        "ftp" => maybe_ftp_proxy.or(maybe_http_proxy.or(maybe_all_proxy)),
+        "ftp" => maybe_ftp_proxy.or(maybe_all_proxy),
         _ => maybe_all_proxy,
     };
     ProxyUrl(url_value, Some(8080))
@@ -414,7 +414,6 @@ mod tests {
         let _l = LOCK.lock();
         scrub_env();
         set_var("HTTPS_PROXY", "http://proxy.example.com:8080");
-        set_var("http_proxy", "http://proxy.example.org:8081");
         set_var("all_proxy", "http://proxy.example.org:8081");
         let u = Url::parse("https://www.example.org").ok().unwrap();
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
@@ -422,11 +421,11 @@ mod tests {
             for_url_str("https://www.example.org").to_string(),
             Some(("http://proxy.example.com:8080/".to_string()))
         );
-        set_var("https_proxy", "http://proxy.example.com:8081");
-        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8081)));
+        set_var("https_proxy", "http://proxy.example.com:8082");
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8082)));
         assert_eq!(
             for_url_str("https://www.example.org").to_string(),
-            Some(("http://proxy.example.com:8081/".to_string()))
+            Some(("http://proxy.example.com:8082/".to_string()))
         );
     }
 
@@ -434,15 +433,8 @@ mod tests {
     fn https_proxy_fallback() {
         let _l = LOCK.lock();
         scrub_env();
-        set_var("http_proxy", "http://proxy.example.com:8080");
         set_var("ALL_PROXY", "http://proxy.example.org:8081");
-        let u = Url::parse("https://www.example.org").ok().unwrap();
-        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
-        assert_eq!(
-            for_url_str("https://www.example.org").to_string(),
-            Some(("http://proxy.example.com:8080/".to_string()))
-        );
-        remove_var("http_proxy");
+        let u = Url::parse("ftp://www.example.org").ok().unwrap();
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
         assert_eq!(
             for_url_str("https://www.example.org").to_string(),
@@ -461,7 +453,6 @@ mod tests {
         let _l = LOCK.lock();
         scrub_env();
         set_var("FTP_PROXY", "http://proxy.example.com:8080");
-        set_var("http_proxy", "http://proxy.example.org:8081");
         set_var("all_proxy", "http://proxy.example.org:8081");
         let u = Url::parse("ftp://www.example.org").ok().unwrap();
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
@@ -469,11 +460,11 @@ mod tests {
             for_url_str("ftp://www.example.org").to_string(),
             Some(("http://proxy.example.com:8080/".to_string()))
         );
-        set_var("ftp_proxy", "http://proxy.example.com:8081");
-        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8081)));
+        set_var("ftp_proxy", "http://proxy.example.com:8082");
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8082)));
         assert_eq!(
             for_url_str("ftp://www.example.org").to_string(),
-            Some(("http://proxy.example.com:8081/".to_string()))
+            Some(("http://proxy.example.com:8082/".to_string()))
         );
     }
 
@@ -481,15 +472,8 @@ mod tests {
     fn ftp_proxy_fallback() {
         let _l = LOCK.lock();
         scrub_env();
-        set_var("http_proxy", "http://proxy.example.com:8080");
         set_var("ALL_PROXY", "http://proxy.example.org:8081");
         let u = Url::parse("ftp://www.example.org").ok().unwrap();
-        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
-        assert_eq!(
-            for_url_str("ftp://www.example.org").to_string(),
-            Some(("http://proxy.example.com:8080/".to_string()))
-        );
-        remove_var("http_proxy");
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.org".to_string(), 8081)));
         assert_eq!(
             for_url_str("ftp://www.example.org").to_string(),
