@@ -14,7 +14,7 @@
 //!
 //! This crate aims to replicate the convention of the __curl__ library and offer it
 //! behind a simple API: in most cases, a single function, `for_url()`, which accepts
-//! a target URL and returns the proxy parameters, if applicable. The method for determining 
+//! a target URL and returns the proxy parameters, if applicable. The method for determining
 //! the parameters is described in detail in that function's documentation.
 //!
 //! # Getting Started
@@ -155,7 +155,7 @@ impl ProxyUrl {
     ///
     /// The transformation will:
     ///
-    /// * Parse the raw URL as a `Url`. If the raw URL lacks the scheme, `http` is assumed and 
+    /// * Parse the raw URL as a `Url`. If the raw URL lacks the scheme, `http` is assumed and
     ///   "http://" is prepended to canonicalize the value;
     /// * Ensure that the host part is not empty;
     /// * Use the default value for the port (or not, see [`with_default_port()`](#method.with_default_port))
@@ -250,6 +250,7 @@ impl ProxyUrl {
 ///
 /// If the target URL matches __no_proxy__, or if the hostname cannot be extracted from the URL,
 /// the function returns `None`. If the port is not explicitly defined in the proxy URL, the value 8080
+/// is used.
 pub fn for_url(url: &Url) -> ProxyUrl {
     if matches_no_proxy(url) {
         return ProxyUrl(None, None);
