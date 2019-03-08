@@ -25,7 +25,7 @@
 //! env_proxy = "0.2"
 //! ```
 //!
-//! Also, import the crate to your crate root:
+//! If you're using the 2015 edition of Rust, import the crate to your crate root:
 //!
 //! ```
 //! extern crate env_proxy;
@@ -52,9 +52,8 @@
 
 
 #[cfg(test)]
-#[macro_use] extern crate lazy_static;
-#[macro_use] extern crate log;
-extern crate url;
+use lazy_static::lazy_static;
+use log::warn;
 
 use std::env::var_os;
 use url::Url;
@@ -93,7 +92,7 @@ fn matches_no_proxy(url: &Url) -> bool {
                     if let Some(host_ch) = host_iter.next() {
                         let host_ch = host_ch as u32;
                         let elem_ch = match elem_ch as u32 {
-                            uppercase @ 0x41 ... 0x5a => uppercase + 0x20,
+                            uppercase @ 0x41 ..= 0x5a => uppercase + 0x20,
                             anything => anything
                         };
                         if elem_ch == host_ch {

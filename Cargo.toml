@@ -9,6 +9,7 @@ repository = "https://github.com/inejge/env_proxy"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
 keywords = ["proxy", "environment", "http", "url"]
+edition = "2018"
 
 [dependencies]
 url = "1"
