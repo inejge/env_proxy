@@ -155,7 +155,8 @@ impl ProxyUrl {
     ///
     /// The transformation will:
     ///
-    /// * Parse the raw URL as a `Url`;
+    /// * Parse the raw URL as a `Url`. If the raw URL lacks the scheme, `http` is assumed and 
+    ///   "http://" is prepended to canonicalize the value;
     /// * Ensure that the host part is not empty;
     /// * Use the default value for the port (or not, see [`with_default_port()`](#method.with_default_port))
     ///   if one is not specified in the raw URL.
@@ -163,10 +164,15 @@ impl ProxyUrl {
     ///
     /// If any of the steps fail, `None` will be returned.
     pub fn to_url(self) -> Option<Url> {
-        if let Some(Ok(mut url)) = self.0.map(|s| Url::parse(&s).map_err(|e| {
-            warn!("url parse error: {}", e);
-            e
-        })) {
+        if let Some(Ok(mut url)) = self.0.map(|mut s| {
+            if !s.contains("://") {
+                s.insert_str(0, "http://");
+            }
+            Url::parse(&s).map_err(|e| {
+                warn!("url parse error: {}", e);
+                e
+            })
+        }) {
             if url.host_str().is_none() {
                 warn!("host part of the URL is empty");
                 return None;
@@ -239,8 +245,8 @@ impl ProxyUrl {
 /// only __all_proxy__ is checked. In this context, "checked" means that the value of a variable is used
 /// if present, and the search for further definitions stops.
 ///
-/// The return value, if not `None`, is an opaque structure wrapping the raw value of the chosen
-/// environment variable.
+/// The return value, if not `None`, is an opaque structure wrapping the value (possibly canonicalized,
+/// see [`ProxyUrl::to_url()`](struct.ProxyUrl.html#method.to_url)) of the chosen environment variable.
 ///
 /// If the target URL matches __no_proxy__, or if the hostname cannot be extracted from the URL,
 /// the function returns `None`. If the port is not explicitly defined in the proxy URL, the value 8080
@@ -363,6 +369,19 @@ mod tests {
         scrub_env();
         set_var("http_proxy", "http://proxy.example.com:8080");
         set_var("all_proxy", "http://proxy.example.org:8081");
+        let u = Url::parse("http://www.example.org").ok().unwrap();
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
+        assert_eq!(
+            for_url_str("http://www.example.org").to_string(),
+            Some(("http://proxy.example.com:8080/".to_string()))
+        );
+    }
+
+    #[test]
+    fn default_proxy_url_scheme() {
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("http_proxy", "proxy.example.com:8080");
         let u = Url::parse("http://www.example.org").ok().unwrap();
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
         assert_eq!(
