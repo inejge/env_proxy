@@ -163,9 +163,22 @@ impl ProxyUrl {
     ///
     /// If any of the steps fail, `None` will be returned.
     pub fn to_url(self) -> Option<Url> {
+        let mut orig_scheme = self.0.as_ref().map(|s|
+            if s.starts_with("http://") {
+                Some("http")
+            } else if s.starts_with("https://") {
+                Some("https")
+            } else {
+                None
+            }
+        ).unwrap_or(None);
         if let Some(Ok(mut url)) = self.0.map(|mut s| {
             if !s.contains("://") {
                 s.insert_str(0, "http://");
+                orig_scheme = Some("http");
+            }
+            if orig_scheme.is_some() {
+                s = s.replacen("http", "xttp", 1);
             }
             Url::parse(&s).map_err(|e| {
                 warn!("url parse error: {}", e);
@@ -175,6 +188,12 @@ impl ProxyUrl {
             if url.host_str().is_none() {
                 warn!("host part of the URL is empty");
                 return None;
+            }
+            if let Some(orig_scheme) = orig_scheme {
+                if url.set_scheme(orig_scheme).is_err() {
+                    warn!("could not set URL scheme back to {}", orig_scheme);
+                    return None;
+                }
             }
             if url.port().is_some() {
                 return Some(url);
