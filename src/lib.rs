@@ -410,6 +410,25 @@ mod tests {
     }
 
     #[test]
+    fn proxy_url_with_explicit_scheme_port() {
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("http_proxy", "http://proxy.example.com:80");
+        let u = Url::parse("http://www.example.org").ok().unwrap();
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 80)));
+        assert_eq!(
+            for_url_str("http://www.example.org").to_string(),
+            Some("http://proxy.example.com:80/".to_string())
+        );
+        set_var("http_proxy", "https://proxy.example.com:443");
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 443)));
+        assert_eq!(
+            for_url_str("http://www.example.org").to_string(),
+            Some("https://proxy.example.com:443/".to_string())
+        );
+    }
+
+    #[test]
     fn http_proxy_fallback() {
         let _l = LOCK.lock();
         scrub_env();
