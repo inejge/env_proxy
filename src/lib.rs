@@ -178,13 +178,7 @@ impl ProxyUrl {
                 orig_scheme = Some("http");
             }
             if orig_scheme.is_some() {
-                // In here, the URL string must start with "http".
-                // Therefore, changing the first byte to 'x' won't change the UTF-8
-                // invariant.
-                unsafe {
-                    let bytes = s.as_bytes_mut();
-                    bytes[0] = b'x';
-                }
+                s = s.replacen("http", "xttp", 1);
             }
             Url::parse(&s).map_err(|e| {
                 warn!("url parse error: {}", e);
