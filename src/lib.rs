@@ -22,7 +22,7 @@
 //! Add the following to the `[dependencies]` section of your `Cargo.toml`:
 //!
 //! ```toml
-//! env_proxy = "0.2"
+//! env_proxy = "0.3"
 //! ```
 //!
 //! If you're using the 2015 edition of Rust, import the crate to your crate root:
