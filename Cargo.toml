@@ -12,7 +12,7 @@ keywords = ["proxy", "environment", "http", "url"]
 edition = "2018"
 
 [dependencies]
-url = "1"
+url = "2"
 log = "0.4"
 
 [dev-dependencies]
