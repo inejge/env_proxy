@@ -56,7 +56,7 @@ use lazy_static::lazy_static;
 use log::warn;
 
 use std::env::var_os;
-use url::Url;
+use url::{self, Url};
 
 macro_rules! env_var_pair {
     ($lc_var:expr, $uc_var:expr) => {
@@ -190,9 +190,17 @@ impl ProxyUrl {
                 return None;
             }
             if let Some(orig_scheme) = orig_scheme {
-                if url.set_scheme(orig_scheme).is_err() {
-                    warn!("could not set URL scheme back to {}", orig_scheme);
-                    return None;
+                let port = url.port();
+                url = match format!("{}{}", orig_scheme, &url[url::Position::AfterScheme..]).parse() {
+                    Ok(url) => url,
+                    Err(e) => {
+                        warn!("could not set URL scheme back to {}: {}", orig_scheme, e);
+                        return None;
+                    },
+                };
+                if port.is_some() {
+                    url.set_port(port).unwrap_or(());
+                    return Some(url);
                 }
             }
             if url.port().is_some() {
@@ -214,7 +222,7 @@ impl ProxyUrl {
     /// The raw URL will first be transformed into a `Url`, with any errors in the conversion
     /// producing a `None` (see [`to_url()`](#method.to_url)).
     pub fn host_port(self) -> Option<(String, u16)> {
-        self.to_url().map(|u| (u.host_str().expect("host_str").to_string(), u.port().expect("port")))
+        self.to_url().map(|u| (u.host_str().expect("host_str").to_string(), u.port_or_known_default().expect("port")))
     }
 
 
@@ -418,13 +426,13 @@ mod tests {
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 80)));
         assert_eq!(
             for_url_str("http://www.example.org").to_string(),
-            Some("http://proxy.example.com:80/".to_string())
+            Some("http://proxy.example.com/".to_string())
         );
         set_var("http_proxy", "https://proxy.example.com:443");
         assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 443)));
         assert_eq!(
             for_url_str("http://www.example.org").to_string(),
-            Some("https://proxy.example.com:443/".to_string())
+            Some("https://proxy.example.com/".to_string())
         );
     }
 
