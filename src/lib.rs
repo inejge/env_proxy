@@ -437,6 +437,15 @@ mod tests {
     }
 
     #[test]
+    fn proxy_url_without_port() {
+        let _l = LOCK.lock();
+        scrub_env();
+        set_var("http_proxy", "http://proxy.example.com");
+        let u = Url::parse("http://www.example.org").ok().unwrap();
+        assert_eq!(for_url(&u).host_port(), Some(("proxy.example.com".to_string(), 8080)));
+    }
+
+    #[test]
     fn http_proxy_fallback() {
         let _l = LOCK.lock();
         scrub_env();
