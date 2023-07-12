@@ -50,7 +50,6 @@
 //! # }
 //! ```
 
-
 #[cfg(test)]
 use lazy_static::lazy_static;
 use log::warn;
@@ -58,21 +57,21 @@ use log::warn;
 use std::env::var_os;
 use url::{self, Url};
 
-macro_rules! env_var_pair {
-    ($lc_var:expr, $uc_var:expr) => {
-        var_os($lc_var).or_else(|| var_os($uc_var))
-            .map(|v| v.to_str()
-                .map(str::to_string)
-                .or_else(|| {
-                    warn!("non UTF-8 content in {}/{}", $lc_var, $uc_var);
-                    None
-                }))
-            .unwrap_or_else(|| None)
-    };
+fn get_env_var(var_names: &[&str]) -> Option<String> {
+    for var_name in var_names {
+        if let Some(value) = var_os(var_name) {
+            if let Some(value_str) = value.to_str() {
+                return Some(value_str.to_owned());
+            } else {
+                warn!("non UTF-8 content in {}", var_name);
+            }
+        }
+    }
+    None
 }
 
 fn matches_no_proxy(url: &Url) -> bool {
-    if let Some(no_proxy) = env_var_pair!("no_proxy", "NO_PROXY") {
+    if let Some(no_proxy) = get_env_var(&["no_proxy", "NO_PROXY"]) {
         if no_proxy == "*" {
             return true;
         }
@@ -225,7 +224,6 @@ impl ProxyUrl {
         self.to_url().map(|u| (u.host_str().expect("host_str").to_string(), u.port_or_known_default().expect("port")))
     }
 
-
     /// Return the string representation of the proxy URL.
     ///
     /// The raw URL will first be transformed into a `Url`, with any errors in the conversion
@@ -282,10 +280,10 @@ pub fn for_url(url: &Url) -> ProxyUrl {
         return ProxyUrl(None, None);
     }
 
-    let maybe_https_proxy = env_var_pair!("https_proxy", "HTTPS_PROXY");
-    let maybe_ftp_proxy = env_var_pair!("ftp_proxy", "FTP_PROXY");
-    let maybe_http_proxy = env_var_pair!("http_proxy", "");             // ugh, but it works
-    let maybe_all_proxy = env_var_pair!("all_proxy", "ALL_PROXY");
+    let maybe_https_proxy = get_env_var(&["https_proxy", "HTTPS_PROXY"]);
+    let maybe_ftp_proxy = get_env_var(&["ftp_proxy", "FTP_PROXY"]);
+    let maybe_http_proxy = get_env_var(&["http_proxy"]);
+    let maybe_all_proxy = get_env_var(&["all_proxy", "ALL_PROXY"]);
 
     let url_value = match url.scheme() {
         "https" => maybe_https_proxy.or(maybe_all_proxy),
